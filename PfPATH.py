@@ -3,7 +3,7 @@
 
 """
 Date: 01012026
-PfPATH — Population-Genetic & Adaptive-Walk Simulator for PfDHFR
+PfPATH — Plasmodium Fitness Pathway Analysis of Trajectories in Heterogeneous Landscapes
 
 This script models PfDHFR evolution under biologically informed constraints.
 

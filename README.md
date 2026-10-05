@@ -1,6 +1,6 @@
 # PfPATH
 
-**PfPATH** (Plasmodium falciparum Pathways of Adaptive Trajectories under Heterogeneous selection)
+**PfPATH** (Plasmodium Fitness Pathway Analysis of Trajectories in Heterogeneous Landscapes)
 is an end-to-end computational framework for modeling **protein evolution under structural,
 biophysical, and population-genetic constraints**, with a primary focus on **PfDHFR antifolate resistance**.
 
