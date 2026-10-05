@@ -124,17 +124,7 @@ def load_walks(path: str) -> pd.DataFrame:
 def compute_ridge_stats(df: pd.DataFrame,
                         resistance_kps: set,
                         min_freq: float = 0.05):
-    """
-    For every (resistance KP, secondary position) pair compute:
-      freq            – fraction of walks at that KP with position present at final step
-      mean_fitness    – mean final fitness of walks that recruited this position
-      mean_first_step – mean step at which position first appeared
-
-    Returns
-    -------
-    detail_df : long-format DataFrame, one row per (kp, position) pair above min_freq
-    freq_pivot: wide DataFrame indexed by position, one column per KP + summary cols
-    """
+    """Per (resistance KP, secondary position): freq, mean_fitness, mean_first_step. Returns detail_df and freq_pivot."""
     records = []
 
     for kp in sorted(resistance_kps):
@@ -652,8 +642,7 @@ def print_report(candidates, resistance_kps, full):
 # ─── oracle validation ────────────────────────────────────────────────────────
 
 def load_oracle(path: str) -> pd.DataFrame:
-    """Load oracle_wetlab23.csv. Mutation labels use the same shifted numbering
-    as the simulator (canonical − 9), so parse_mutations works directly."""
+    """Load oracle wet-lab CSV; mutation labels use shifted numbering (canonical − 9)."""
     df = pd.read_csv(path)
     for col in ['F_Ki_Pyr', 'F_Ki_Cyc', 'F_eff', 'Ki_Pyr', 'kcat',
                 'Km_H2F', 'Km_NADPH', 'kcatKm_H2F']:
@@ -817,8 +806,7 @@ def fig_oracle_step1_correlation(df: pd.DataFrame, oracle: pd.DataFrame,
 
 def fig_oracle_feff_landscape(oracle: pd.DataFrame, resistance_kps: set,
                               candidates: pd.DataFrame, out_dir: str):
-    """Bar chart of oracle F_eff for all haplotypes with clinical pathway
-    annotation and ridge-candidate marker."""
+    """Bar chart of oracle F_eff for all haplotypes with clinical pathway annotation and ridge-candidate marker."""
     plot_df = oracle.dropna(subset=['F_eff']).copy()
     plot_df = plot_df.sort_values('n_muts')
 
@@ -906,8 +894,7 @@ def fig_oracle_feff_landscape(oracle: pd.DataFrame, resistance_kps: set,
 
 def fig_clinical_corecruitment(df: pd.DataFrame, oracle: pd.DataFrame,
                                resistance_kps: set, out_dir: str):
-    """For KP99 walks, track per-step co-recruitment fraction for known
-    resistance positions and check against oracle clinical haplotypes."""
+    """Track per-step co-recruitment of resistance positions in KP99 walks; check against oracle clinical haplotypes."""
     kp = 99
     if kp not in resistance_kps:
         return
@@ -1012,9 +999,7 @@ def fig_clinical_corecruitment(df: pd.DataFrame, oracle: pd.DataFrame,
 
 def fig_lethality_avoidance(df: pd.DataFrame, oracle: pd.DataFrame,
                             resistance_kps: set, out_dir: str):
-    """Show that the simulator avoids experimentally lethal combinations.
-    A7V+S99N is inactive in the oracle; check no walk co-recruits A7V (pos7)
-    and S99N (pos99) together."""
+    """Verify simulator avoids oracle-lethal A7V+S99N co-recruitment in KP99 walks."""
     kp = 99
     if kp not in resistance_kps:
         return
@@ -1463,8 +1448,7 @@ def _esm_sort_ridge_by_structure(wt_contacts: np.ndarray,
                                   ridge_pos: List[int],
                                   res_pos: List[int],
                                   L: int) -> List[int]:
-    """Sort ridge positions by max ESM2 contact probability to any resistance position.
-    Ensures the most structurally coupled ridge candidates appear first in figures."""
+    """Sort ridge positions by max ESM2 contact probability to any resistance position (most coupled first)."""
     vr = [p for p in ridge_pos if 1 <= p <= L]
     vres = [p for p in res_pos if 1 <= p <= L]
     scores = {rp: max(wt_contacts[rp-1, rsp-1] for rsp in vres) for rp in vr}
