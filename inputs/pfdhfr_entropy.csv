@@ -1,0 +1,220 @@
+Position,Residue,Shannon Entropy,Residue Name,Polarity,Charge
+1,D,-0.0,Aspartic acid,Polar,Negative
+2,I,-0.0,Isoleucine,Non-polar,Neutral
+3,Y,-0.0,Tyrosine,Polar,Neutral
+4,A,-0.0,Alanine,Non-polar,Neutral
+5,I,-0.0,Isoleucine,Non-polar,Neutral
+6,C,0.13579395875159386,Cysteine,Non-polar,Neutral
+7,A,0.13269142083987176,Alanine,Non-polar,Neutral
+8,C,-0.0,Cysteine,Non-polar,Neutral
+9,C,0.12425083738963087,Cysteine,Non-polar,Neutral
+10,K,-0.0,Lysine,Polar,Positive
+11,V,-0.0,Valine,Non-polar,Neutral
+12,E,-0.0,Glutamic acid,Polar,Negative
+13,S,-0.0,Serine,Polar,Neutral
+14,K,-0.0,Lysine,Polar,Positive
+15,N,-0.0,Asparagine,Polar,Neutral
+16,E,-0.0,Glutamic acid,Polar,Negative
+17,G,0.11690684913753106,Glycine,Non-polar,Neutral
+18,K,0.4041137205069468,Lysine,Polar,Positive
+19,K,0.11690684913753106,Lysine,Polar,Positive
+20,N,0.11690684913753106,Asparagine,Polar,Neutral
+21,E,-0.0,Glutamic acid,Polar,Negative
+22,V,-0.0,Valine,Non-polar,Neutral
+23,F,-0.0,Phenylalanine,Non-polar,Neutral
+24,N,-0.0,Asparagine,Polar,Neutral
+25,N,-0.0,Asparagine,Polar,Neutral
+26,Y,-0.0,Tyrosine,Polar,Neutral
+27,T,-0.0,Threonine,Polar,Neutral
+28,F,-0.0,Phenylalanine,Non-polar,Neutral
+29,R,-0.0,Arginine,Polar,Positive
+30,G,-0.0,Glycine,Non-polar,Neutral
+31,L,-0.0,Leucine,Non-polar,Neutral
+32,G,-0.0,Glycine,Non-polar,Neutral
+33,N,-0.0,Asparagine,Polar,Neutral
+34,K,-0.0,Lysine,Polar,Positive
+35,G,0.11045304667259806,Glycine,Non-polar,Neutral
+36,V,-0.0,Valine,Non-polar,Neutral
+37,L,-0.0,Leucine,Non-polar,Neutral
+38,P,-0.0,Proline,Non-polar,Neutral
+39,W,-0.0,Tryptophan,Non-polar,Neutral
+40,K,-0.0,Lysine,Polar,Positive
+41,C,0.11045304667259806,Cysteine,Non-polar,Neutral
+42,N,0.6600602334155767,Asparagine,Polar,Neutral
+43,S,-0.0,Serine,Polar,Neutral
+44,L,-0.0,Leucine,Non-polar,Neutral
+45,D,-0.0,Aspartic acid,Polar,Negative
+46,M,-0.0,Methionine,Non-polar,Neutral
+47,K,0.11045304667259806,Lysine,Polar,Positive
+48,Y,-0.0,Tyrosine,Polar,Neutral
+49,F,-0.0,Phenylalanine,Non-polar,Neutral
+50,C,0.48043931370360504,Cysteine,Non-polar,Neutral
+51,A,-0.0,Alanine,Non-polar,Neutral
+52,V,-0.0,Valine,Non-polar,Neutral
+53,T,-0.0,Threonine,Polar,Neutral
+54,T,-0.0,Threonine,Polar,Neutral
+55,Y,-0.0,Tyrosine,Polar,Neutral
+56,V,-0.0,Valine,Non-polar,Neutral
+57,N,-0.0,Asparagine,Polar,Neutral
+58,E,-0.0,Glutamic acid,Polar,Negative
+59,S,-0.0,Serine,Polar,Neutral
+60,K,-0.0,Lysine,Polar,Positive
+61,Y,-0.0,Tyrosine,Polar,Neutral
+62,E,-0.0,Glutamic acid,Polar,Negative
+63,K,-0.0,Lysine,Polar,Positive
+64,L,-0.0,Leucine,Non-polar,Neutral
+65,K,-0.0,Lysine,Polar,Positive
+66,Y,-0.0,Tyrosine,Polar,Neutral
+67,K,-0.0,Lysine,Polar,Positive
+68,R,-0.0,Arginine,Polar,Positive
+69,C,-0.0,Cysteine,Non-polar,Neutral
+70,K,-0.0,Lysine,Polar,Positive
+71,Y,-0.0,Tyrosine,Polar,Neutral
+72,L,-0.0,Leucine,Non-polar,Neutral
+73,N,-0.0,Asparagine,Polar,Neutral
+74,K,-0.0,Lysine,Polar,Positive
+75,E,-0.0,Glutamic acid,Polar,Negative
+76,T,-0.0,Threonine,Polar,Neutral
+77,V,-0.0,Valine,Non-polar,Neutral
+78,D,-0.0,Aspartic acid,Polar,Negative
+79,N,-0.0,Asparagine,Polar,Neutral
+80,V,-0.0,Valine,Non-polar,Neutral
+81,N,-0.0,Asparagine,Polar,Neutral
+82,D,-0.0,Aspartic acid,Polar,Negative
+83,M,-0.0,Methionine,Non-polar,Neutral
+84,P,-0.0,Proline,Non-polar,Neutral
+85,N,-0.0,Asparagine,Polar,Neutral
+86,S,-0.0,Serine,Polar,Neutral
+87,K,0.11045304667259806,Lysine,Polar,Positive
+88,K,-0.0,Lysine,Polar,Positive
+89,L,-0.0,Leucine,Non-polar,Neutral
+90,Q,-0.0,Glutamine,Polar,Neutral
+91,N,-0.0,Asparagine,Polar,Neutral
+92,V,-0.0,Valine,Non-polar,Neutral
+93,V,0.11045304667259806,Valine,Non-polar,Neutral
+94,V,0.11045304667259806,Valine,Non-polar,Neutral
+95,M,-0.0,Methionine,Non-polar,Neutral
+96,G,-0.0,Glycine,Non-polar,Neutral
+97,R,-0.0,Arginine,Polar,Positive
+98,T,-0.0,Threonine,Polar,Neutral
+99,S,0.48043931370360504,Serine,Polar,Neutral
+100,W,-0.0,Tryptophan,Non-polar,Neutral
+101,E,-0.0,Glutamic acid,Polar,Negative
+102,S,-0.0,Serine,Polar,Neutral
+103,I,-0.0,Isoleucine,Non-polar,Neutral
+104,P,-0.0,Proline,Non-polar,Neutral
+105,K,-0.0,Lysine,Polar,Positive
+106,K,-0.0,Lysine,Polar,Positive
+107,F,-0.0,Phenylalanine,Non-polar,Neutral
+108,K,-0.0,Lysine,Polar,Positive
+109,P,-0.0,Proline,Non-polar,Neutral
+110,L,-0.0,Leucine,Non-polar,Neutral
+111,S,-0.0,Serine,Polar,Neutral
+112,N,0.11045304667259806,Asparagine,Polar,Neutral
+113,R,0.11045304667259806,Arginine,Polar,Positive
+114,I,-0.0,Isoleucine,Non-polar,Neutral
+115,N,-0.0,Asparagine,Polar,Neutral
+116,V,-0.0,Valine,Non-polar,Neutral
+117,I,-0.0,Isoleucine,Non-polar,Neutral
+118,L,-0.0,Leucine,Non-polar,Neutral
+119,S,-0.0,Serine,Polar,Neutral
+120,R,-0.0,Arginine,Polar,Positive
+121,T,-0.0,Threonine,Polar,Neutral
+122,L,-0.0,Leucine,Non-polar,Neutral
+123,K,0.27638071011658155,Lysine,Polar,Positive
+124,K,-0.0,Lysine,Polar,Positive
+125,E,-0.0,Glutamic acid,Polar,Negative
+126,D,0.18811292741457375,Aspartic acid,Polar,Negative
+127,F,-0.0,Phenylalanine,Non-polar,Neutral
+128,D,-0.0,Aspartic acid,Polar,Negative
+129,E,-0.0,Glutamic acid,Polar,Negative
+130,D,0.11045304667259806,Aspartic acid,Polar,Negative
+131,V,-0.0,Valine,Non-polar,Neutral
+132,Y,-0.0,Tyrosine,Polar,Neutral
+133,I,-0.0,Isoleucine,Non-polar,Neutral
+134,I,-0.0,Isoleucine,Non-polar,Neutral
+135,N,-0.0,Asparagine,Polar,Neutral
+136,K,-0.0,Lysine,Polar,Positive
+137,V,-0.0,Valine,Non-polar,Neutral
+138,E,-0.0,Glutamic acid,Polar,Negative
+139,D,-0.0,Aspartic acid,Polar,Negative
+140,L,-0.0,Leucine,Non-polar,Neutral
+141,I,-0.0,Isoleucine,Non-polar,Neutral
+142,V,-0.0,Valine,Non-polar,Neutral
+143,L,-0.0,Leucine,Non-polar,Neutral
+144,L,-0.0,Leucine,Non-polar,Neutral
+145,G,-0.0,Glycine,Non-polar,Neutral
+146,K,-0.0,Lysine,Polar,Positive
+147,L,-0.0,Leucine,Non-polar,Neutral
+148,N,-0.0,Asparagine,Polar,Neutral
+149,Y,-0.0,Tyrosine,Polar,Neutral
+150,Y,-0.0,Tyrosine,Polar,Neutral
+151,K,0.11045304667259806,Lysine,Polar,Positive
+152,C,-0.0,Cysteine,Non-polar,Neutral
+153,F,-0.0,Phenylalanine,Non-polar,Neutral
+154,I,-0.0,Isoleucine,Non-polar,Neutral
+155,I,0.5423489422439274,Isoleucine,Non-polar,Neutral
+156,G,-0.0,Glycine,Non-polar,Neutral
+157,G,-0.0,Glycine,Non-polar,Neutral
+158,S,-0.0,Serine,Polar,Neutral
+159,V,-0.0,Valine,Non-polar,Neutral
+160,V,-0.0,Valine,Non-polar,Neutral
+161,Y,-0.0,Tyrosine,Polar,Neutral
+162,Q,-0.0,Glutamine,Polar,Neutral
+163,E,-0.0,Glutamic acid,Polar,Negative
+164,F,-0.0,Phenylalanine,Non-polar,Neutral
+165,L,-0.0,Leucine,Non-polar,Neutral
+166,E,-0.0,Glutamic acid,Polar,Negative
+167,K,-0.0,Lysine,Polar,Positive
+168,K,-0.0,Lysine,Polar,Positive
+169,L,-0.0,Leucine,Non-polar,Neutral
+170,I,-0.0,Isoleucine,Non-polar,Neutral
+171,K,0.27638071011658155,Lysine,Polar,Positive
+172,K,-0.0,Lysine,Polar,Positive
+173,I,0.11045304667259806,Isoleucine,Non-polar,Neutral
+174,Y,-0.0,Tyrosine,Polar,Neutral
+175,F,-0.0,Phenylalanine,Non-polar,Neutral
+176,T,-0.0,Threonine,Polar,Neutral
+177,R,0.22445109055580997,Arginine,Polar,Positive
+178,I,-0.0,Isoleucine,Non-polar,Neutral
+179,N,-0.0,Asparagine,Polar,Neutral
+180,S,-0.0,Serine,Polar,Neutral
+181,T,-0.0,Threonine,Polar,Neutral
+182,Y,-0.0,Tyrosine,Polar,Neutral
+183,E,-0.0,Glutamic acid,Polar,Negative
+184,C,-0.0,Cysteine,Non-polar,Neutral
+185,D,-0.0,Aspartic acid,Polar,Negative
+186,V,-0.0,Valine,Non-polar,Neutral
+187,F,-0.0,Phenylalanine,Non-polar,Neutral
+188,F,-0.0,Phenylalanine,Non-polar,Neutral
+189,P,0.13906079845474112,Proline,Non-polar,Neutral
+190,E,0.15841057013179086,Glutamic acid,Polar,Negative
+191,I,-0.0,Isoleucine,Non-polar,Neutral
+192,N,-0.0,Asparagine,Polar,Neutral
+193,E,-0.0,Glutamic acid,Polar,Negative
+194,N,-0.0,Asparagine,Polar,Neutral
+195,E,-0.0,Glutamic acid,Polar,Negative
+196,Y,-0.0,Tyrosine,Polar,Neutral
+197,Q,-0.0,Glutamine,Polar,Neutral
+198,I,-0.0,Isoleucine,Non-polar,Neutral
+199,I,-0.0,Isoleucine,Non-polar,Neutral
+200,S,-0.0,Serine,Polar,Neutral
+201,V,-0.0,Valine,Non-polar,Neutral
+202,S,-0.0,Serine,Polar,Neutral
+203,D,0.2711893730418441,Aspartic acid,Polar,Negative
+204,V,-0.0,Valine,Non-polar,Neutral
+205,Y,-0.0,Tyrosine,Polar,Neutral
+206,T,-0.0,Threonine,Polar,Neutral
+207,S,-0.0,Serine,Polar,Neutral
+208,N,-0.0,Asparagine,Polar,Neutral
+209,N,-0.0,Asparagine,Polar,Neutral
+210,T,-0.0,Threonine,Polar,Neutral
+211,T,0.30463609734923813,Threonine,Polar,Neutral
+212,L,-0.0,Leucine,Non-polar,Neutral
+213,D,-0.0,Aspartic acid,Polar,Negative
+214,F,-0.0,Phenylalanine,Non-polar,Neutral
+215,I,-0.0,Isoleucine,Non-polar,Neutral
+216,I,-0.0,Isoleucine,Non-polar,Neutral
+217,Y,-0.0,Tyrosine,Polar,Neutral
+218,K,0.410116318288409,Lysine,Polar,Positive
+219,K,-0.0,Lysine,Polar,Positive

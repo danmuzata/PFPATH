@@ -1,0 +1,83 @@
+
+---
+
+# 📄 `environment.yml` (FULL)
+
+This environment supports:
+- Python
+- R + bio3d
+- MDAnalysis
+- Network analysis
+- Streamlit (future-ready, but harmless now)
+
+```yaml
+name: pfpath
+
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+
+dependencies:
+  # --------------------
+  # Core Python
+  # --------------------
+  - python=3.10
+  - numpy
+  - scipy
+  - pandas
+  - matplotlib
+  - seaborn
+  - scikit-learn
+
+  # --------------------
+  # Network analysis
+  # --------------------
+  - networkx
+  - python-louvain
+
+  # --------------------
+  # Molecular dynamics
+  # --------------------
+  - mdanalysis
+  - mdtraj
+  - biopython
+
+  # --------------------
+  # Sequence tools
+  # --------------------
+  - muscle
+  - clustalo
+  - blast
+
+  # --------------------
+  # R environment
+  # --------------------
+  - r-base>=4.2
+  - r-bio3d
+  - r-optparse
+  - r-igraph
+
+  # --------------------
+  # DSSP
+  # --------------------
+  - dssp
+
+  # --------------------
+  # Utilities
+  # --------------------
+  - pyyaml
+  - tqdm
+  - joblib
+
+  # --------------------
+  # Streamlit (future GUI)
+  # --------------------
+  - streamlit
+
+  # --------------------
+  # Pip-only extras
+  # --------------------
+  - pip
+  - pip:
+      - py3Dmol

@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Outputs and run directories
+Results/
+results/
+runs/
+logs/
+nohup.out
+walk_analysis/
+walk_analysis_copy/
+walk_analysis_copy_2/
+walk_analysis_manuscript/
+
+# Large binary / cached files
+inputs/esm_results.npz
+inputs/pfdhfr_mi_matrix.npy
+inputs/cij_dccm_matrix copy.csv
+
+# EVcouplings (not core pipeline inputs)
+inputs/A7UD81_PLAFA_b0.5_CouplingScores.csv
+inputs/A7UD81_PLAFA_b0.5_CouplingScores_longrange.csv
+
+# Supplementary and intermediate inputs not in main pipeline
+inputs/SI_TableA_taxonomy.csv
+inputs/SI_TableB_coverage.csv
+inputs/blosum_substitution_scores.csv
+inputs/WT_rmsf_backbone.xvg
+inputs/single_mut_pred_for_heatmap.csv
+inputs/pfdhfr_only_MUSCLE.fasta
+
+# Manuscript files (private)
+*.docx
+
+# Experiment-specific directories
+Experiments/
+MD/
+EVcouplings/
+PyMOL/
+TALK/
+pfpath/
+pfpath_v2/
+streamlit_ui/
+docs/
+validation/
+
+# Figures and images (generated outputs)
+*.png
+*.pdf
+*.webp
+
+# Miscellaneous
+*.deb
+*.log
+audit_citations.log
