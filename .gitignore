@@ -11,6 +11,10 @@ results/
 runs/
 logs/
 nohup.out
+
+# Example output exception (tracked on GitHub)
+!example_output/
+!example_output/**
 walk_analysis/
 walk_analysis_copy/
 walk_analysis_copy_2/
@@ -52,6 +56,7 @@ validation/
 *.png
 *.pdf
 *.webp
+!example_output/*.png
 
 # Miscellaneous
 *.deb
