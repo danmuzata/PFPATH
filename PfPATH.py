@@ -2,30 +2,25 @@
 # -*- coding: utf-8 -*-
 
 """
-Date: 01012026
 PfPATH — Population-Genetic & Adaptive-Walk Simulator for PfDHFR
 
-This script models PfDHFR evolution under biologically informed constraints.
+Models PfDHFR resistance evolution using a composite fitness landscape
+(DMS, SPIRED ddG, Rosetta ddG, MI, DCCM) and an empirically calibrated
+Wright–Fisher population model with haplotype-specific drug selection.
 
-Inputs (optional except WT):
-- DMS fitness landscape                       (--dms)
-- SPIRED thermodynamic ddG                    (--thermo)
-- Rosetta ddG (single, double, triple, quad)  (--ddg_s, --ddg_combo ...)
-- Co-evolution mutual information             (--mi)
-- DCCM contact strength                       (--dccm)
-
-Biology-aware defaults:
-- Mutation rate μ ~1e-5 per site per generation (effective population rate)
-- Population size N default 10000
-- Selection strength β default 2.0
-- ΔΔG-based stability cutoff using SPIRED ddG (default cutoff 4.0 kcal/mol)
-- Drug mode with haplotype-specific selection coefficients:
-    * Triple: N51I+C59R+S108N
-    * Quad:   N51I+C59R+S108N+I164L
+Inputs (all optional except --wt):
+  --dms        DMS single-mutant epistatic fitness
+  --thermo     SPIRED thermodynamic ddG
+  --ddg_s      Rosetta single-mutant ddG
+  --ddg_combo  Rosetta double/triple/quad ddG
+  --mi         Co-evolution mutual information
+  --dccm       DCCM correlated-motion matrix
+  --oracle     Wet-lab Ki/Eff CSV for drug selection calibration
 
 Modes:
-- Population (Wright–Fisher) simulation  [default]
-- Adaptive walks around key positions    [--walks]
+  default      Wright–Fisher population + adaptive walks
+  --walks_only Adaptive walks only
+  --pop_only   Population simulation only
 """
 
 import argparse
@@ -55,7 +50,10 @@ def warn(msg: str) -> None:
 
 
 def normalise_array(values: List[float]) -> np.ndarray:
-    """Z-score normalise then squash with tanh(z/2) → [-1, 1]."""
+    """
+    Z-score then squashed with tanh(z/2) → in [-1, 1].
+    Returns an array of same length.
+    """
     arr = np.array(values, dtype=float)
     if arr.size == 0:
         return np.array([], dtype=float)
@@ -79,7 +77,11 @@ def load_wt_fasta(path: str) -> str:
 # ========================= Loaders =========================
 
 def load_dms(path: Optional[str]) -> Dict[Tuple[int, str], float]:
-    """Load DMS epistasis single-mutant fitness; returns dict[(pos, aa)] = normalised score."""
+    """
+    Load DMS single mutant fitness.
+    Expects columns: pos, subs, prediction_epistatic (or similar).
+    Returns dict[(pos, aa)] = normalized score.
+    """
     if not path:
         warn("DMS file not provided; DMS term will be omitted.")
         return {}
@@ -120,7 +122,13 @@ def load_dms(path: Optional[str]) -> Dict[Tuple[int, str], float]:
 
 def load_thermo(path: Optional[str]) -> Tuple[Dict[Tuple[int, str], float],
                                              Dict[Tuple[int, str], float]]:
-    """Load SPIRED ddG; returns (thermo_norm, thermo_raw) dicts keyed by (pos, aa)."""
+    """
+    Load SPIRED or similar thermo ddG for single mutants.
+    Expects 'mutant' and 'ddG' columns.
+    Returns:
+        thermo_norm[(pos, aa)] = normalized ddG (sign flipped so stabilizing is positive)
+        thermo_raw[(pos, aa)]  = raw ddG (kcal/mol)
+    """
     if not path:
         warn("Thermo file not provided; thermo term and stability cutoff will be omitted.")
         return {}, {}
@@ -168,7 +176,12 @@ def parse_mutation_label(label: str, offset: int = -9) -> Tuple[int, str]:
 
 
 def load_ddg_single(path: Optional[str]) -> Dict[Tuple[int, str], float]:
-    """Load Rosetta single-mutant ddG; applies -9 offset to map canonical→shifted numbering."""
+    """
+    Load Rosetta single-mutant ddG.
+    Expects 'case_name' with format like N108I,... and 'total_score'.
+    Uses offset -9 to map to PfDHFR numbering (108→99, etc.).
+    Returns normalized, sign-flipped dict[(pos, aa)].
+    """
     if not path:
         warn("Single ddG file not provided; Rosetta single ddG term will be omitted.")
         return {}
@@ -201,7 +214,11 @@ def load_ddg_single(path: Optional[str]) -> Dict[Tuple[int, str], float]:
 
 
 def load_ddg_combos(paths: Optional[List[str]]) -> Dict[frozenset, float]:
-    """Load Rosetta ddG for double/triple/quad combos; returns dict[frozenset[(pos, aa)]]."""
+    """
+    Load Rosetta ddG for double/triple/quad combos.
+    Expects 'case_name' with labels like N51I_N108S,... and 'total_score'.
+    Returns normalized, sign-flipped dict[frozenset[(pos, aa)]].
+    """
     if not paths:
         warn("No ddg_combo files provided; higher-order ddG term will be omitted.")
         return {}
@@ -236,7 +253,13 @@ def load_ddg_combos(paths: Optional[List[str]]) -> Dict[frozenset, float]:
 
 
 def load_mi(path: Optional[str]) -> Dict[Tuple[int, int], float]:
-    """Load MI co-evolution pairs; returns symmetric dict[(i, j)] = MI in [0, 1]."""
+    """
+    Load MI co-evolution pairs.
+    Expects columns 'Res1', 'Res2', 'MI' with residue indices embedded in strings.
+    MI values are already in [0, 1] with a natural scale (0 = no coupling,
+    1 = perfect coupling), so they are used directly without z-normalisation.
+    Returns symmetric dict[(i, j)] = raw MI in [0, 1].
+    """
     if not path:
         warn("MI file not provided; MI term will be omitted.")
         return {}
@@ -285,7 +308,13 @@ def load_mi(path: Optional[str]) -> Dict[Tuple[int, int], float]:
 
 
 def load_blosum(path: Optional[str]) -> Dict[Tuple[int, str], float]:
-    """Load position-specific BLOSUM substitution scores; returns normalised dict[(pos, aa)]."""
+    """
+    Load position-specific BLOSUM substitution scores.
+    Expects columns: Position, WT_AA, then one column per amino acid.
+    Covers all 219 positions including DMS-dark ones (e.g. 5, 6, 7 / A7V).
+    Returns globally normalized dict[(pos, mut_aa)] = score.
+    Self-substitutions (wt→wt) are excluded.
+    """
     if not path:
         return {}
 
@@ -334,7 +363,12 @@ def load_blosum(path: Optional[str]) -> Dict[Tuple[int, str], float]:
 
 
 def load_pocket(path: Optional[str]) -> Dict[int, Tuple[str, float]]:
-    """Load binding-pocket position weights (pos, role, weight CSV); returns dict[pos] = (role, weight)."""
+    """
+    Load binding-pocket position metadata from CSV with columns: pos, role, weight.
+    weight is a multiplier applied to the per-mutation S1 contribution at that position.
+    role is a label (drug / substrate / both / structural) used for reporting.
+    Returns dict[pos] = (role, weight).
+    """
     if not path:
         return {}
     out: Dict[int, Tuple[str, float]] = {}
@@ -356,7 +390,10 @@ def load_pocket(path: Optional[str]) -> Dict[int, Tuple[str, float]]:
 
 
 def load_dccm(path: Optional[str]) -> Dict[Tuple[int, int], float]:
-    """Load DCCM matrix CSV; returns normalised off-diagonal dict[(i, j)] = score."""
+    """
+    Load DCCM CSV with header and first column as residue index.
+    Returns normalized off-diagonal dict[(i,j)] = score.
+    """
     if not path:
         warn("DCCM file not provided; DCCM term will be omitted.")
         return {}
@@ -396,7 +433,18 @@ def load_dccm(path: Optional[str]) -> Dict[Tuple[int, int], float]:
 # ========================= Fitness model =========================
 
 class FitnessModel:
-    """Composite fitness model: exp(β·(S1 + S2 + penalty)) × stability_factor."""
+    """
+    Composite fitness model integrating DMS, thermo ddG, Rosetta ddG,
+    MI, DCCM, and mutation-count penalty.
+
+    fitness(seq) = exp(beta * (S1 + S2 + penalty)) * stability_factor
+
+    S1: per-mutation contributions (DMS + thermo + Rosetta single).
+        Mutations absent from all sources receive a mild unknown-mutation prior.
+    S2: pairwise epistasis (Rosetta combo ddG + MI + DCCM) plus a lone-pair
+        penalty when only one member of a strongly MI-coupled pair is mutated.
+    penalty: quadratic mutation-load penalty; hard cap at max_mut_load.
+    """
 
     def __init__(
         self,
@@ -450,7 +498,9 @@ class FitnessModel:
         return muts
 
     def _stability_penalty_factor(self, muts: List[Tuple[int, str]]) -> float:
-        """Apply soft/hard stability cutoff based on SPIRED ddG_raw."""
+        """
+        Apply stability cutoff based on SPIRED ddG_raw.
+        """
         if not self.thermo_raw or self.ddg_cutoff_kcal is None:
             return 1.0
         if not muts:
@@ -489,10 +539,7 @@ class FitnessModel:
         if stability_factor <= 1e-12:
             return 1e-12
 
-        # S1: coverage-weighted single-site contributions.
-        # pocket_weights scale up functionally critical positions (binding pocket).
-        # BLOSUM fills in evolutionary substitution cost for DMS-dark positions.
-        # Unknown penalty fires only when ALL data sources are absent.
+        # S1: per-site contributions; unknown penalty fires when all sources absent.
         S1 = 0.0
         for (p, aa) in muts:
             dms_val    = self.dms.get((p, aa), None)
@@ -534,16 +581,10 @@ class FitnessModel:
                 if partner not in mutated_positions:
                     S2 -= w_lone * mi_val
 
-        # Linear purifying selection: small cost per mutation models the average
-        # deleterious background effect of random amino acid changes. Applied to
-        # ALL mutations (unlike w_count which only kicks in above 6). Default 0
-        # for adaptive walks; set via --wf_purify in WF oracle-only mode to
-        # prevent neutral sequence drift that would slow the simulation.
         w_purify = self.w.get('w_purify', 0.0)
         S1 -= w_purify * len(muts)
 
-        # Quadratic mutation-load penalty — grows fast enough to cap walk depth
-        # while staying gentle for sequences with ≤6 mutations.
+        # Quadratic mutation-load penalty.
         n_excess = max(0, len(muts) - 6)
         penalty = -self.w['w_count'] * (n_excess + 0.1 * n_excess ** 2)
 
@@ -562,7 +603,26 @@ class FitnessModel:
 # ========================= Drug / haplotype logic =========================
 
 def classify_pf_dhfr_haplotype(seq: str) -> str:
-    """Classify PfDHFR haplotype (shifted numbering): lethal/cyc_double/cyc_single/quad/triple/double/single/partial/wt_like."""
+    """
+    Classify PfDHFR haplotypes using shifted numbering (canonical − 9):
+
+      Canonical → Shifted
+      A16V  → A7V    (cycloguanil resistance)
+      N51I  → N42I   C59R → C50R   S108N → S99N   S108T → S99T   I164L → I155L
+
+    Cycloguanil pathway (checked first):
+      lethal     = A7V + S99N  (experimentally inactive — no DHFR activity)
+      cyc_double = A7V + S99T  (canonical A16V + S108T — full Cyc resistance)
+      cyc_single = A7V alone   (canonical A16V — partial Cyc resistance)
+
+    Pyrimethamine pathway:
+      quad    = N42I + C50R + S99N + I155L
+      triple  = N42I + C50R + S99N
+      double  = N42I + S99N  (primary double intermediate)
+      single  = S99N alone   (first sweep in most lineages)
+      partial = any other non-zero subset of the four Pyr markers
+      wt_like = none of the above markers present
+    """
     if len(seq) < 155:
         return 'other'
 
@@ -595,7 +655,11 @@ def classify_pf_dhfr_haplotype(seq: str) -> str:
 
 
 def drug_state_for_generation(mode: str, gen: int, cycle_pattern: Tuple[int, int]) -> str:
-    """Return 'on' or 'off' drug state for a given generation under none/on/off/cycle mode."""
+    """
+    mode: 'none', 'on', 'off', 'cycle'
+    cycle_pattern: (on_gens, off_gens) for 'cycle' mode.
+    Returns 'on' or 'off'.
+    """
     if mode == 'on':
         return 'on'
     if mode in ('off', 'none'):
@@ -628,7 +692,14 @@ def haplotype_fitness_factor(
     cyc_single_adv_on: float = 0.0,
     cyc_double_adv_on: float = 0.0,
 ) -> float:
-    """Apply haplotype-specific Pyr and Cyc selection coefficients; returns multiplicative fitness factor."""
+    """
+    Apply haplotype-specific selection coefficients for pyrimethamine and cycloguanil pathways.
+
+    Pyr and Cyc pathway factors are independent and multiplied together.
+    On-drug: multiplicative fitness advantage proportional to Ki fold-change.
+    Off-drug: fitness cost proportional to catalytic efficiency loss.
+    Lethal haplotypes (A7V+S99N) return 0.
+    """
     if hap == 'lethal':
         return 0.0
 
@@ -672,7 +743,9 @@ AMINO_ACIDS = list("ACDEFGHIKLMNPQRSTVWY")
 
 
 def mutate(seq: str, mu: float, alphabet=AMINO_ACIDS) -> str:
-    """Per-site point mutation with probability mu."""
+    """
+    Per-site mutation with probability mu.
+    """
     chars = list(seq)
     for i, aa in enumerate(chars):
         if random.random() < mu:
@@ -706,8 +779,15 @@ def run_population(
     cyc_single_adv_on: float = 0.0,
     cyc_double_adv_on: float = 0.0,
     log_every: int = 100,
+    wf_oracle_only: bool = False,
 ) -> None:
-    """Wright–Fisher simulation; writes freqs.csv and haplotypes.csv to out_dir."""
+    """
+    Wright–Fisher simulation with mutation and selection.
+
+    Writes:
+      - out_dir/freqs.csv      : key mutation position frequencies over time
+      - out_dir/haplotypes.csv : haplotype class frequencies over time
+    """
     population = [wt] * pop
 
     freq_path  = os.path.join(out_dir, 'freqs.csv')
@@ -731,9 +811,12 @@ def run_population(
             final_fitness = {}
 
             for seq in unique_seqs:
-                base = model.compute_fitness(seq)
-                if not np.isfinite(base) or base <= 0.0:
-                    base = 1e-12
+                if wf_oracle_only:
+                    base = 1.0  # all landscape weights are zeroed; oracle factor is sole selection
+                else:
+                    base = model.compute_fitness(seq)
+                    if not np.isfinite(base) or base <= 0.0:
+                        base = 1e-12
 
                 hap    = classify_pf_dhfr_haplotype(seq)
                 factor = haplotype_fitness_factor(
@@ -797,7 +880,9 @@ def run_population(
 # ========================= Adaptive walks =========================
 
 def describe_mutations(wt: str, seq: str) -> str:
-    """Return compact mutation string relative to WT, e.g. 'N42I+C50R+S99N'."""
+    """
+    Return compact mutation string relative to WT, e.g. 'N51I+C59R+S108N'.
+    """
     muts = []
     for i, (a, b) in enumerate(zip(wt, seq), start=1):
         if a != b:
@@ -814,7 +899,14 @@ def run_adaptive_walks(
     steps: int = 50,
     tries_per_step: int = 20
 ) -> None:
-    """Run stochastic adaptive walks from each key position; writes walks.csv to out_dir."""
+    """
+    Run stochastic adaptive walks from WT seeded at each key position.
+
+    For each key position, generates up to 19 walks (one per possible substitution).
+    Step 0 = WT baseline; step 1 = forced substitution at key_position;
+    steps 2..steps = greedy hill-climb over random single-mutant neighbours.
+    Writes walks.csv to out_dir.
+    """
     os.makedirs(out_dir, exist_ok=True)
     out_path = os.path.join(out_dir, "walks.csv")
 
@@ -892,7 +984,10 @@ def run_adaptive_walks(
 # ========================= Oracle / wet-lab loader =========================
 
 def _parse_mutation_set(mut_str: str):
-    """Parse 'N51I+C59R+S108N' → list of (pos, wt_aa, mut_aa); WT/empty returns []."""
+    """
+    Parse 'N51I+C59R+S108N' -> list of (pos, wt_aa, mut_aa).
+    WT / empty rows return [].
+    """
     mut_str = str(mut_str).strip()
     if not mut_str:
         return []
@@ -912,7 +1007,10 @@ def _parse_mutation_set(mut_str: str):
 
 
 def _haplotype_from_mutations(muts) -> str:
-    """Classify a mutation list into haplotype classes (shifted numbering); mirrors classify_pf_dhfr_haplotype."""
+    """
+    Classify a mutation set into haplotype classes using shifted numbering.
+    Mirrors the logic of classify_pf_dhfr_haplotype.
+    """
     if not muts:
         return "wt_like"
 
@@ -943,7 +1041,18 @@ def _haplotype_from_mutations(muts) -> str:
     return "other"
 
 def load_oracle(path: Optional[str], mode: str = "combo"):
-    """Load wet-lab oracle CSV; derives Pyr and Cyc drug-selection parameters (ki/eff/combo modes)."""
+    """
+    Load wet-lab oracle and derive drug-selection parameters for both
+    pyrimethamine (N42I/C50R/S99N/I155L) and cycloguanil (A7V/S99T) pathways.
+
+    Modes:
+      - ki    : only F_Ki_Pyr / F_Ki_Cyc → sets on-drug advantages
+      - eff   : only F_eff               → sets off-drug costs
+      - combo : 70% Ki + 30% F_eff mixture (recommended)
+
+    Returns a dict with both Pyr keys (single/double/triple/quad) and
+    Cyc keys (cyc_single/cyc_double). Cyc keys are 0.0 if F_Ki_Cyc column absent.
+    """
     if not path:
         return None
 
@@ -1134,7 +1243,10 @@ def load_oracle(path: Optional[str], mode: str = "combo"):
 # ========================= Simple plotting helpers =========================
 
 def plot_population_outputs(out_dir: str, pop: int, key_positions: List[int]) -> None:
-    """Plot allele and haplotype frequency trajectories from freqs.csv and haplotypes.csv."""
+    """
+    Plot allele frequencies at key positions and haplotype frequencies over time.
+    Saves PNGs into out_dir if CSVs exist.
+    """
     freq_path = os.path.join(out_dir, 'freqs.csv')
     haplo_path = os.path.join(out_dir, 'haplotypes.csv')
 
@@ -1178,7 +1290,9 @@ def plot_population_outputs(out_dir: str, pop: int, key_positions: List[int]) ->
 
 
 def _pos_from_token(tok: str) -> Optional[int]:
-    """Extract residue index from a mutation token like 'A7S' or 'N42Y'."""
+    """
+    Extract residue index from a token like 'A7S' or 'N42Y'.
+    """
     m = re.match(r"[A-Z](\d+)[A-Z]", tok)
     if m:
         return int(m.group(1))
@@ -1186,7 +1300,13 @@ def _pos_from_token(tok: str) -> Optional[int]:
 
         
 def plot_walks_outputs(out_dir: str) -> None:
-    """Plot adaptive-walk fitness trajectories per key position from walks.csv."""
+    """
+    Plot adaptive-walk fitness trajectories for each key position.
+
+    Legend labels: 'A7S → I216Q' style, using:
+      - start mutation at the key position (step 1)
+      - last non-key-position mutation at the final step (or same if none).
+    """
     path = os.path.join(out_dir, "walks.csv")
     if not os.path.exists(path):
         return
@@ -1247,32 +1367,18 @@ def plot_walks_outputs(out_dir: str) -> None:
         plt.xticks(fontsize=14)
         plt.yticks(fontsize=14)
 
-# ---------------- LEGEND (clean 2-column version) ----------------
-        # Extract handles + labels BEFORE creating legend
         handles, labels = plt.gca().get_legend_handles_labels()
-
-        # Create inside-plot legend
         leg = plt.legend(
-            handles,
-            labels,
-            fontsize=12,
-            loc="lower right",
-            ncol=2,                 # <<<<<<<<<<  TWO columns
-            frameon=True,
-            framealpha=0.9,
-            borderpad=0.6,
-            labelspacing=0.4,
+            handles, labels,
+            fontsize=12, loc="lower right", ncol=2,
+            frameon=True, framealpha=0.9, borderpad=0.6, labelspacing=0.4,
         )
-
-        # Increase marker & line size inside legend
         for h in leg.legend_handles:
             try:
                 h.set_markersize(10)
                 h.set_linewidth(2.5)
-            except:
+            except Exception:
                 pass
-
-        # leave space at bottom for legend
         plt.tight_layout(rect=[0, 0.12, 1, 1])
         plt.savefig(os.path.join(out_dir, f"walks_pos{kp}.png"), dpi=300)
         plt.close()
@@ -1305,7 +1411,7 @@ def parse_args():
     p.add_argument('--gens', type=int, default=20000,
                    help="Number of generations (default 20000).")
     p.add_argument('--mu', type=float, default=1e-5,
-                   help="Per-site mutation rate (default 1e-5).")
+                   help="Per-site mutation rate (default 1e-5; White 2004).")
 
     p.add_argument('--out', default=None,
                    help="Output directory. Defaults to 'runs/pfpath_run_YYYYMMDD_HHMMSS' "
@@ -1319,8 +1425,10 @@ def parse_args():
     p.add_argument('--w_blosum',  type=float, default=0.3,
                    help="Weight for BLOSUM substitution score term (default 0.3). "
                         "Only active when --blosum file is also provided.")
-    p.add_argument('--w_mi',      type=float, default=0.5)
-    p.add_argument('--w_dccm',    type=float, default=0.5)
+    p.add_argument('--w_mi',      type=float, default=0.05,
+                   help="Weight for MI coevolution pairwise term (default 0.05).")
+    p.add_argument('--w_dccm',    type=float, default=0.5,
+                   help="Weight for DCCM correlated-dynamics term (default 0.5).")
     p.add_argument('--w_count',   type=float, default=0.05,
                    help="Mutation-load penalty coefficient (quadratic, default 0.05).")
     p.add_argument('--w_unknown', type=float, default=0.1,
@@ -1329,8 +1437,8 @@ def parse_args():
                    help="Lone-pair epistatic penalty coefficient per MI unit (default 0.05).")
     p.add_argument('--mi_lone_threshold', type=float, default=0.5,
                    help="MI threshold above which lone-pair penalty applies (default 0.5).")
-    p.add_argument('--max_mut_load', type=int, default=12,
-                   help="Hard cap on number of simultaneous mutations (default 12).")
+    p.add_argument('--max_mut_load', type=int, default=50,
+                   help="Hard cap on simultaneous mutations per sequence (default 50).")
     p.add_argument('--beta', type=float, default=2.0,
                    help="Selection strength parameter β (default 2.0).")
 
@@ -1352,29 +1460,37 @@ def parse_args():
     p.add_argument('--drug_mode', choices=['none', 'on', 'off', 'cycle'],
                    default='none',
                    help="Pyrimethamine drug selection mode: none, on, off, cycle (default none).")
-    p.add_argument('--drug_cycle', type=str, default='3,1',
-                   help="Pyr cycle pattern 'on,off' generations for drug_mode=cycle (default '3,1').")
+    p.add_argument('--drug_cycle', type=str, default='1,1',
+                   help="Pyr cycle pattern 'on,off' generations for drug_mode=cycle (default '1,1'; "
+                        "1,1 = 50%% drug coverage).")
     p.add_argument('--drug_mode_cyc', choices=['none', 'on', 'off', 'cycle'],
                    default='none',
                    help="Cycloguanil drug selection mode: none, on, off, cycle (default none).")
-    p.add_argument('--drug_cycle_cyc', type=str, default='3,1',
-                   help="Cyc cycle pattern 'on,off' generations for drug_mode_cyc=cycle (default '3,1').")
-    p.add_argument('--single_cost_off', type=float, default=0.00,
-                   help="Fitness cost of single mutant off-drug (default 0.00).")
-    p.add_argument('--double_cost_off', type=float, default=0.01,
-                   help="Fitness cost of double mutant off-drug (default 0.01).")
-    p.add_argument('--triple_cost_off', type=float, default=0.02,
-                   help="Fitness cost of triple mutant off-drug (default 0.02).")
-    p.add_argument('--quad_cost_off',   type=float, default=0.10,
-                   help="Fitness cost of quadruple mutant off-drug (default 0.10).")
-    p.add_argument('--single_adv_on',   type=float, default=0.02,
-                   help="Fitness advantage of single mutant on-drug (default 0.02).")
-    p.add_argument('--double_adv_on',   type=float, default=0.04,
-                   help="Fitness advantage of double mutant on-drug (default 0.04).")
-    p.add_argument('--triple_adv_on',   type=float, default=0.08,
-                   help="Fitness advantage of triple mutant on-drug (default 0.08).")
-    p.add_argument('--quad_adv_on',     type=float, default=0.12,
-                   help="Fitness advantage of quadruple mutant on-drug (default 0.12).")
+    p.add_argument('--drug_cycle_cyc', type=str, default='1,1',
+                   help="Cyc cycle pattern 'on,off' generations for drug_mode_cyc=cycle (default '1,1').")
+    p.add_argument('--single_cost_off', type=float, default=0.005,
+                   help="Fitness cost of single mutant off-drug (default 0.005; "
+                        "literature: S108N minimal cost, Nair 2003).")
+    p.add_argument('--double_cost_off', type=float, default=0.003,
+                   help="Fitness cost of double mutant off-drug (default 0.003; "
+                        "literature: N51I+S108N negligible cost, Nair 2003).")
+    p.add_argument('--triple_cost_off', type=float, default=0.003,
+                   help="Fitness cost of triple mutant off-drug (default 0.003).")
+    p.add_argument('--quad_cost_off',   type=float, default=0.030,
+                   help="Fitness cost of quadruple mutant off-drug (default 0.030; "
+                        "literature: IRNI quad ~3%% cost, Boni et al. 2008).")
+    p.add_argument('--single_adv_on',   type=float, default=0.015,
+                   help="Fitness advantage of single mutant on-drug (default 0.015; "
+                        "literature: S108N s~0.01-0.02 in moderate pyrimethamine, "
+                        "Anderson & Roper 2005).")
+    p.add_argument('--double_adv_on',   type=float, default=0.025,
+                   help="Fitness advantage of double mutant on-drug (default 0.025).")
+    p.add_argument('--triple_adv_on',   type=float, default=0.040,
+                   help="Fitness advantage of triple mutant on-drug (default 0.040).")
+    p.add_argument('--quad_adv_on',     type=float, default=0.065,
+                   help="Fitness advantage of quadruple mutant on-drug (default 0.065; "
+                        "calibrated to produce ~15-20 year sweep cascade at μ=1e-5, "
+                        "N=10000, 50%% drug coverage).")
     p.add_argument('--cyc_single_cost_off', type=float, default=0.30,
                    help="Fitness cost of A7V (cyc_single) off-drug (default 0.30).")
     p.add_argument('--cyc_double_cost_off', type=float, default=0.27,
@@ -1387,17 +1503,11 @@ def parse_args():
     p.add_argument('--log_every', type=int, default=100,
                    help="Log every N generations (default 100).")
     p.add_argument('--wf_oracle_only', action='store_true',
-                   help="Population mode only: zero out DMS/thermo/MI weights so that only the "
-                        "stability gate and oracle-based haplotype factors drive fitness. "
-                        "Recommended for resistance evolution WF runs (avoids the z-score "
-                        "normalization artifact that makes ~58%% of random mutations appear "
-                        "beneficial, which prevents resistance sweeps from being tracked).")
-    p.add_argument('--wf_purify', type=float, default=0.02,
-                   help="Per-mutation purifying selection cost used with --wf_oracle_only "
-                        "(default 0.02). Prevents neutral sequence drift that would cause "
-                        "every individual to have a unique sequence, slowing computation. "
-                        "Each mutation reduces log-fitness by this amount; 0.02 gives ~4%% "
-                        "cost per mutation, keeping resistance sweeps dominant.")
+                   help="WF population mode: all landscape terms zeroed; only oracle "
+                        "haplotype factors drive selection. Use for resistance cascade modelling.")
+    p.add_argument('--wf_purify', type=float, default=0.0,
+                   help="Per-mutation purifying selection cost (default 0.0; only used with "
+                        "--wf_oracle_only).")
 
     # Adaptive-walk mode
     p.add_argument('--walks_only', action='store_true',
@@ -1554,21 +1664,27 @@ def main():
         'beta':       args.beta,
     }
 
-    # Population uses oracle-only zeroed weights when --wf_oracle_only is set.
-    # This bypasses the DMS z-score normalisation artefact (which makes ~58% of
-    # random mutations appear beneficial and prevents resistance sweeps from being
-    # tracked). Walks are unaffected — they always get the full landscape above.
+    # WF population uses pure oracle fitness when --wf_oracle_only is set.
+    # All sequence-level landscape terms (DMS, thermo, ddG_pair, MI, DCCM, BLOSUM)
+    # are zeroed so that non-canonical mutations cannot sweep ahead of IRNL.
+    # Oracle Ki-calibrated haplotype factors are the sole selection pressure,
+    # matching the question: "given measured drug resistance advantages, does the
+    # IRNL cascade sweep in the expected order?"
+    # Adaptive walks retain the full landscape.
     if getattr(args, 'wf_oracle_only', False) and run_pop:
         pop_weights = {
-            'w_dms': 0.0, 'w_thermo': 0.0, 'w_ddg': 0.0, 'w_ddg_pair': 0.0,
-            'w_mi':  0.0, 'w_dccm':   0.0, 'w_blosum': 0.0,
-            'w_count': args.w_count,
+            'w_dms': 0.0, 'w_thermo': 0.0, 'w_ddg': 0.0,
+            'w_ddg_pair': 0.0,
+            'w_mi':       0.0,
+            'w_dccm': 0.0, 'w_blosum': 0.0,
+            'w_count': 0.0,
             'w_unknown': 0.0, 'w_lone': 0.0,
             'w_purify': args.wf_purify,
             'max_mut_load': args.max_mut_load,
             'beta': args.beta,
         }
-        print(f"[WF oracle-only] Population: landscape zeroed, "
+        print(f"[WF oracle-only] Population: all landscape terms zeroed; "
+              f"oracle haplotype factors are sole selection pressure. "
               f"purifying cost={args.wf_purify:.3f}. Walks: full landscape.")
     else:
         pop_weights = walk_weights
@@ -1605,6 +1721,7 @@ def main():
     # run_pop / run_walks already set above (needed for oracle-only guard).
 
     if run_walks:
+        random.seed(args.seed + 1000 if args.seed is not None else None)
         run_adaptive_walks(
             model=walk_model,
             wt=wt,
@@ -1616,6 +1733,7 @@ def main():
         )
 
     if run_pop:
+        random.seed(args.seed)
         run_population(
             model=pop_model,
             wt=wt,
@@ -1641,6 +1759,7 @@ def main():
             cyc_single_adv_on=cyc_single_adv_on,
             cyc_double_adv_on=cyc_double_adv_on,
             log_every=args.log_every,
+            wf_oracle_only=getattr(args, 'wf_oracle_only', False),
         )
 
     if args.plot:
@@ -1663,43 +1782,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-# End of pfpath_simulator.py
-
-
-'''
-python pfpath_simulator.py \
-  --wt wt.fasta \
-  --dms epistasis_single_mutant_matrix.csv \
-  --thermo spired_thermo.csv \
-  --ddg_s PfDHFR_singles-ddG.csv \
-  --ddg_combo PfDHFR_doubles-ddG.csv PfDHFR_triples-ddG.csv PfDHFR_quads-ddG.csv \
-  --mi co-evolution.csv \
-  --dccm pfdhfr_dccm_matrix.csv \
-  --walks \
-  --key_positions 7,41,42,50,99,155 \
-  --walk_reps 19 \
-  --walk_steps 50 \
-  --out pfpath_walks \
-  --plot
-  
-  
-python pfpath_simulator.py \
-  --wt wt.fasta \
-  --dms epistasis_single_mutant_matrix.csv \
-  --thermo spired_thermo.csv \
-  --ddg_s PfDHFR_singles-ddG.csv \
-  --ddg_combo PfDHFR_doubles-ddG.csv PfDHFR_triples-ddG.csv PfDHFR_quads-ddG.csv \
-  --mi co-evolution.csv \
-  --dccm pfdhfr_dccm_matrix.csv \
-  --oracle oracle_wetlab.csv \
-  --oracle_mode combo \
-  --pop 10000 \
-  --gens 20000 \
-  --mu 1e-5 \
-  --drug_mode cycle \
-  --drug_cycle 3,1 \
-  --key_positions 7,41,42,50,99,155 \
-  --out pfpath_run_combo \ #or pfpath_run_ki \ or pfpath_run_eff
-  --plot
-
-'''

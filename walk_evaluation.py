@@ -1923,7 +1923,7 @@ def parse_args():
                    help='Path to walks.csv from a PfPATH run.')
     p.add_argument('--out', default=None,
                    help='Output directory (default: same directory as walks.csv).')
-    p.add_argument('--resistance_kps', type=str, default='42,50,99,155',
+    p.add_argument('--resistance_kps', type=str, default='7,41,42,50,99,155',
                    help='Comma-separated shifted positions of primary resistance '
                         'mutations (default: 42,50,99,155).')
     p.add_argument('--min_freq', type=float, default=0.05,
