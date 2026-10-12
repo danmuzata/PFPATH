@@ -525,16 +525,14 @@ class FitnessModel:
     def compute_fitness(self, seq: str) -> float:
         muts = self._mutations(seq)
 
-        # Hard cap: sequences with more mutations than biologically plausible are inviable
         if len(muts) > int(self.w.get('max_mut_load', 12)):
             return 1e-12
 
-        # Lethality guard: A7V + S99N is experimentally inactive (no DHFR activity)
+        # A7V + S99N: experimentally inactive (Nair 2003).
         _pos2aa = dict(muts)
         if _pos2aa.get(7) == 'V' and _pos2aa.get(99) == 'N':
             return 1e-12
 
-        # Stability gate (ΔΔG_max filter per methodology)
         stability_factor = self._stability_penalty_factor(muts)
         if stability_factor <= 1e-12:
             return 1e-12
@@ -812,7 +810,7 @@ def run_population(
 
             for seq in unique_seqs:
                 if wf_oracle_only:
-                    base = 1.0  # all landscape weights are zeroed; oracle factor is sole selection
+                    base = 1.0
                 else:
                     base = model.compute_fitness(seq)
                     if not np.isfinite(base) or base <= 0.0:
@@ -934,7 +932,6 @@ def run_adaptive_walks(
             alt_aas = [a for a in AMINO_ACIDS if a != wt_aa]
             n_reps  = min(reps, len(alt_aas))
 
-            # Write WT baseline once per key position (not per rep — it's identical)
             f.write(f"{kp},0,0,{wt_fit:.6f},WT,False\n")
 
             for idx in range(n_reps):
@@ -944,7 +941,7 @@ def run_adaptive_walks(
                 walk_num += 1
                 pbar.set_postfix(pos=kp, start=f"{wt_aa}{kp}{start_aa}", walk=walk_num)
 
-                # Step 1: force mutation at kp
+                # Step 1: seed mutation at kp
                 seq_list = list(wt)
                 seq_list[kp - 1] = start_aa
                 current_seq = "".join(seq_list)
@@ -1641,7 +1638,6 @@ def main():
         cyc_single_cost_off = args.cyc_single_cost_off
         cyc_double_cost_off = args.cyc_double_cost_off
 
-    # Resolve which modes to run first — needed for oracle-only guard below.
     walks_only = args.walks_only or args.walks
     pop_only   = args.pop_only
     run_pop    = not walks_only
@@ -1679,9 +1675,9 @@ def main():
             'max_mut_load': args.max_mut_load,
             'beta': args.beta,
         }
-        print(f"[WF oracle-only] Population: all landscape terms zeroed; "
-              f"oracle haplotype factors are sole selection pressure. "
-              f"purifying cost={args.wf_purify:.3f}. Walks: full landscape.")
+        print(f"[WF oracle-only] Population: landscape terms zeroed; "
+              f"oracle haplotype factors drive selection. "
+              f"purifying cost={args.wf_purify:.3f}.")
     else:
         pop_weights = walk_weights
 
@@ -1713,8 +1709,6 @@ def main():
     os.makedirs(out_dir, exist_ok=True)
     print(f"\n[2/2] Running simulations  →  {out_dir}")
     print("-"*60)
-
-    # run_pop / run_walks already set above (needed for oracle-only guard).
 
     if run_walks:
         random.seed(args.seed + 1000 if args.seed is not None else None)
