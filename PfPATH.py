@@ -1664,13 +1664,9 @@ def main():
         'beta':       args.beta,
     }
 
-    # WF population uses pure oracle fitness when --wf_oracle_only is set.
-    # All sequence-level landscape terms (DMS, thermo, ddG_pair, MI, DCCM, BLOSUM)
-    # are zeroed so that non-canonical mutations cannot sweep ahead of IRNL.
-    # Oracle Ki-calibrated haplotype factors are the sole selection pressure,
-    # matching the question: "given measured drug resistance advantages, does the
-    # IRNL cascade sweep in the expected order?"
-    # Adaptive walks retain the full landscape.
+    # In oracle-only mode, population fitness is determined solely by
+    # empirically measured drug resistance advantages (Ki fold-changes, Nair 2003).
+    # Adaptive walks use the full composite landscape.
     if getattr(args, 'wf_oracle_only', False) and run_pop:
         pop_weights = {
             'w_dms': 0.0, 'w_thermo': 0.0, 'w_ddg': 0.0,
